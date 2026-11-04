@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Projek Saya</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent-1: #06b6d4;
+      --accent-2: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f8fafc;
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--primary-gradient);
+      color: white;
+      text-align: center;
+      padding: 4rem 1.5rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    header h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 1.15rem;
+      color: #94a3b8;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: -2rem auto 3rem;
+      padding: 0 1.5rem;
+      flex: 1;
+    }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #e2e8f0;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-banner {
+      height: 140px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: flex-end;
+      color: white;
+    }
+
+    .card-1 .card-banner {
+      background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+    }
+
+    .card-2 .card-banner {
+      background: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%);
+    }
+
+    .card-banner h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .card-body {
+      padding: 1.8rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card-body p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .tag {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      background-color: #f1f5f9;
+      color: #334155;
+    }
+
+    .btn {
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+      padding: 0.85rem 1.5rem;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      color: white;
+      transition: opacity 0.2s ease;
+    }
+
+    .card-1 .btn {
+      background-color: #0284c7;
+    }
+
+    .card-2 .btn {
+      background-color: #6d28d9;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      border-top: 1px solid #e2e8f0;
+      background-color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Profil Projek Saya</h1>
+    <p>Koleksi pembangunan aplikasi web interaktif dan visualisasi data.</p>
+  </header>
+
+  <main class="container">
+    <div class="projects-grid">
+      
+      <!-- Projek 1 -->
+      <article class="card card-1">
+        <div class="card-banner">
+          <h2>Projek 1: Destinasi Pelancongan</h2>
+        </div>
+        <div class="card-body">
+          <p>Portal maklumat tempat-tempat pelancongan menarik yang memaparkan panduan tarikan utama, maklumat lokasi, dan susun atur visual yang mesra pengguna.</p>
+          <div class="tags">
+            <span class="tag">Pelancongan</span>
+            <span class="tag">HTML / CSS</span>
+            <span class="tag">Web Design</span>
+          </div>
+          <a href="lab1/index.html" class="btn">Buka Projek Pelancongan</a>
+        </div>
+      </article>
+
+      <!-- Projek 2 -->
+      <article class="card card-2">
+        <div class="card-banner">
+          <h2>Projek 2: Dashboard Penduduk Malaysia</h2>
+        </div>
+        <div class="card-body">
+          <p>Papan pemuka (dashboard) analisis data yang menyediakan gambaran statistik demografi dan demografi penduduk di Malaysia secara interaktif.</p>
+          <div class="tags">
+            <span class="tag">Visualisasi Data</span>
+            <span class="tag">Dashboard</span>
+            <span class="tag">Statistik Malaysia</span>
+          </div>
+          <a href="lab2/index.html" class="btn">Buka Dashboard Penduduk</a>
+        </div>
+      </article>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Portfolio Projek. Hak Cipta Terpelihara.</p>
+  </footer>
+
+</body>
+</html>
