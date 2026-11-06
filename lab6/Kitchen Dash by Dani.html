@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mama's Kitchen Dash</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            background: #fff8f0;
+        }
+
+        .font-fredoka {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        /* Custom Scrollbar for Kitchen Stations */
+        ::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #fcd34d;
+            border-radius: 10px;
+        }
+
+        /* Animations */
+        @keyframes bounce-short {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-bounce-short {
+            animation: bounce-short 0.6s infinite;
+        }
+
+        @keyframes sizzle-shake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(1px, 1px) rotate(1deg); }
+            50% { transform: translate(-1px, -1px) rotate(-1deg); }
+            75% { transform: translate(-1px, 1px) rotate(1deg); }
+            100% { transform: translate(1px, -1px) rotate(0deg); }
+        }
+        .cooking-sizzle {
+            animation: sizzle-shake 0.15s infinite;
+        }
+
+        .recipe-card {
+            transition: all 0.2s ease;
+        }
+        .recipe-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .plate-slot {
+            background-image: radial-gradient(#e5e7eb 20%, transparent 20%);
+            background-size: 10px 10px;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen overflow-hidden flex flex-col items-center justify-center p-2 sm:p-4">
+
+    <!-- Game Container -->
+    <div id="gameContainer" class="relative w-full max-w-5xl h-full max-h-[750px] bg-amber-50 rounded-3xl border-4 border-amber-300 shadow-2xl flex flex-col overflow-hidden">
+        
+        <!-- TOP HUD -->
+        <header class="w-full bg-amber-400 text-amber-950 px-4 py-2.5 flex justify-between items-center border-b-4 border-amber-500 z-10 shadow-sm">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white px-3 py-1 rounded-2xl shadow-inner border border-amber-200 flex items-center space-x-2">
+                    <i class="fas fa-coins text-yellow-500 text-lg"></i>
+                    <span id="scoreText" class="font-fredoka text-xl text-amber-900">RM 0</span>
+                </div>
+                <div class="bg-white px-3 py-1 rounded-2xl shadow-inner border border-amber-200 flex items-center space-x-2">
+                    <i class="fas fa-heart text-red-500 text-lg"></i>
+                    <span id="livesText" class="font-fredoka text-xl text-amber-900">❤️❤️❤️</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <div class="text-right hidden sm:block">
+                    <div class="text-xs uppercase font-bold text-amber-800">Day Target</div>
+                    <div id="targetText" class="font-fredoka text-amber-950 text-sm">RM 150</div>
+                </div>
+                <button id="soundToggle" class="bg-amber-100 hover:bg-white text-amber-800 w-10 h-10 rounded-full flex items-center justify-center shadow font-bold transition">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN KITCHEN COURT -->
+        <main class="relative flex-grow flex flex-col justify-between p-3 bg-gradient-to-b from-orange-100 to-amber-50 overflow-y-auto">
+            
+            <!-- CUSTOMERS COUNTER AREA -->
+            <section class="w-full h-44 bg-amber-200/60 rounded-2xl border-2 border-amber-300/80 p-2 flex items-center justify-around gap-2 relative overflow-hidden">
+                <div class="absolute inset-x-0 bottom-0 h-4 bg-amber-400/40 rounded-b-xl border-t border-amber-400"></div>
+                <div id="customerQueue" class="w-full h-full flex items-center justify-around z-10">
+                    <!-- Customer Speech Bubbles & Avatars will be injected here -->
+                </div>
+            </section>
+
+            <!-- PREPARATION & COOKING AREA -->
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-3 my-2">
+                
+                <!-- 1. CHOPPING & PREP STATION -->
+                <div class="bg-white/90 border-2 border-amber-200 rounded-2xl p-3 shadow-md flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-fredoka text-amber-900 text-sm flex items-center gap-1.5">
+                            <i class="fas fa-utensils text-amber-500"></i> 1. Prep Counter
+                        </span>
+                        <span id="prepStatus" class="text-xs font-bold text-slate-400">Idle</span>
+                    </div>
+
+                    <div class="grid grid-cols-4 gap-2 my-2">
+                        <button onclick="selectIngredient('beef')" class="ingredient-btn bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-xl p-2 flex flex-col items-center shadow-sm active:scale-95 transition">
+                            <span class="text-2xl">🥩</span>
+                            <span class="text-[10px] font-bold text-amber-900 mt-1">Patty</span>
+                        </button>
+                        <button onclick="selectIngredient('bread')" class="ingredient-btn bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-xl p-2 flex flex-col items-center shadow-sm active:scale-95 transition">
+                            <span class="text-2xl">🍞</span>
+                            <span class="text-[10px] font-bold text-amber-900 mt-1">Bun</span>
+                        </button>
+                        <button onclick="selectIngredient('veggie')" class="ingredient-btn bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-xl p-2 flex flex-col items-center shadow-sm active:scale-95 transition">
+                            <span class="text-2xl">🥬</span>
+                            <span class="text-[10px] font-bold text-amber-900 mt-1">Lettuce</span>
+                        </button>
+                        <button onclick="selectIngredient('fruit')" class="ingredient-btn bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-xl p-2 flex flex-col items-center shadow-sm active:scale-95 transition">
+                            <span class="text-2xl">🍓</span>
+                            <span class="text-[10px] font-bold text-amber-900 mt-1">Berries</span>
+                        </button>
+                    </div>
+
+                    <div class="bg-amber-100/50 rounded-xl p-2 flex items-center justify-between border border-amber-200 min-h-[44px]">
+                        <span class="text-xs text-amber-800 font-bold">Cutting Board:</span>
+                        <div id="prepSlot" class="flex items-center space-x-1 font-bold text-amber-950 text-sm">
+                            <span class="text-slate-400 italic font-normal text-xs">Empty</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. STOVE & GRILL STATION -->
+                <div class="bg-white/90 border-2 border-amber-200 rounded-2xl p-3 shadow-md flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-fredoka text-amber-900 text-sm flex items-center gap-1.5">
+                            <i class="fas fa-fire text-orange-500"></i> 2. Stove & Grill
+                        </span>
+                        <span class="text-xs font-bold text-amber-600">Don't Burn!</span>
+                    </div>
+
+                    <!-- Stove Slot 1 -->
+                    <div id="stoveSlot1" class="relative bg-slate-100 border-2 border-slate-200 rounded-xl p-2 flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                            <span id="stove1Icon" class="text-2xl">🍳</span>
+                            <div>
+                                <div id="stove1Name" class="text-xs font-bold text-slate-700">Pan #1: Empty</div>
+                                <div class="w-24 bg-slate-200 rounded-full h-2 mt-1 overflow-hidden">
+                                    <div id="stove1Progress" class="bg-green-500 h-full w-0 transition-all duration-200"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="stove1Btn" onclick="actionStove(1)" disabled class="px-3 py-1 bg-amber-400 text-amber-950 rounded-lg font-bold text-xs shadow disabled:opacity-40 disabled:cursor-not-allowed">Cook</button>
+                    </div>
+
+                    <!-- Stove Slot 2 -->
+                    <div id="stoveSlot2" class="relative bg-slate-100 border-2 border-slate-200 rounded-xl p-2 flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span id="stove2Icon" class="text-2xl">🍳</span>
+                            <div>
+                                <div id="stove2Name" class="text-xs font-bold text-slate-700">Pan #2: Empty</div>
+                                <div class="w-24 bg-slate-200 rounded-full h-2 mt-1 overflow-hidden">
+                                    <div id="stove2Progress" class="bg-green-500 h-full w-0 transition-all duration-200"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="stove2Btn" onclick="actionStove(2)" disabled class="px-3 py-1 bg-amber-400 text-amber-950 rounded-lg font-bold text-xs shadow disabled:opacity-40 disabled:cursor-not-allowed">Cook</button>
+                    </div>
+                </div>
+
+                <!-- 3. ASSEMBLY & SERVING PLATE -->
+                <div class="bg-white/90 border-2 border-amber-200 rounded-2xl p-3 shadow-md flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-fredoka text-amber-900 text-sm flex items-center gap-1.5">
+                            <i class="fas fa-concierge-bell text-red-500"></i> 3. Assembly Plate
+                        </span>
+                        <button onclick="clearPlate()" class="text-[10px] bg-red-100 hover:bg-red-200 text-red-600 font-bold px-2 py-0.5 rounded transition">Trash</button>
+                    </div>
+
+                    <div class="plate-slot rounded-xl border-2 border-dashed border-slate-300 p-2 min-h-[70px] flex items-center justify-center gap-1 flex-wrap" id="assemblyArea">
+                        <span class="text-slate-400 text-xs italic">Stack ingredients here...</span>
+                    </div>
+
+                    <button onclick="serveDish()" class="w-full mt-2 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-fredoka rounded-xl shadow-md active:scale-98 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-check-circle"></i> SERVE TO CUSTOMER
+                    </button>
+                </div>
+
+            </section>
+
+            <!-- RECIPE BOOK REFERENCE -->
+            <section class="bg-amber-100/70 border border-amber-300/80 rounded-xl p-2 flex items-center justify-around text-xs gap-2 overflow-x-auto">
+                <span class="font-bold text-amber-900 font-fredoka flex items-center gap-1 whitespace-nowrap">
+                    <i class="fas fa-book-open text-amber-600"></i> Cookbook:
+                </span>
+                <div class="flex space-x-3 text-[11px] text-amber-950">
+                    <div class="bg-white/80 px-2 py-1 rounded-lg border border-amber-200 shadow-sm flex items-center gap-1">
+                        <span class="font-bold">Burger 🍔:</span> Bun + Cooked Patty + Lettuce
+                    </div>
+                    <div class="bg-white/80 px-2 py-1 rounded-lg border border-amber-200 shadow-sm flex items-center gap-1">
+                        <span class="font-bold">Smoothie 🥤:</span> Berries + Toast/Blend
+                    </div>
+                    <div class="bg-white/80 px-2 py-1 rounded-lg border border-amber-200 shadow-sm flex items-center gap-1">
+                        <span class="font-bold">Salad 🥗:</span> Chopped Lettuce + Berries
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- GAME OVER / VICTORY OVERLAY -->
+        <div id="endOverlay" class="hidden absolute inset-0 bg-amber-950/80 backdrop-blur-sm z-30 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl p-6 max-w-md w-full border-4 border-amber-400 text-center shadow-2xl animate-bounce-short">
+                <div id="endEmoji" class="text-6xl mb-2">🎉</div>
+                <h2 id="endTitle" class="font-fredoka text-3xl text-amber-900 mb-1">Day Complete!</h2>
+                <p id="endSubtitle" class="text-sm font-bold text-amber-700 mb-6">Mama is super proud of you!</p>
+
+                <div class="bg-amber-50 rounded-2xl p-4 border border-amber-200 space-y-3 mb-6 text-left">
+                    <div class="flex justify-between items-center text-sm font-bold">
+                        <span class="text-slate-600"><i class="fas fa-concierge-bell text-amber-500 mr-1.5"></i>Dishes Served:</span>
+                        <span id="statServed" class="text-amber-900 font-fredoka text-base">0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm font-bold">
+                        <span class="text-slate-600"><i class="fas fa-coins text-yellow-500 mr-1.5"></i>Tips Earned:</span>
+                        <span id="statTips" class="text-emerald-600 font-fredoka text-base">RM 0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm font-bold">
+                        <span class="text-slate-600"><i class="fas fa-smile text-pink-500 mr-1.5"></i>Satisfaction Rate:</span>
+                        <span id="statHappiness" class="text-amber-900 font-fredoka text-base">100%</span>
+                    </div>
+                </div>
+
+                <button onclick="resetGame()" class="w-full py-3.5 bg-amber-400 hover:bg-amber-500 text-amber-950 font-fredoka text-lg rounded-2xl shadow-lg transition transform active:scale-95">
+                    PLAY AGAIN <i class="fas fa-redo ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- AUDIO & GAME LOGIC ENGINE -->
+    <script>
+        // --- AUDIO SYNTHESIZER (Web Audio API) ---
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'chop') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.08);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } 
+            else if (type === 'sizzle') {
+                const bufferSize = audioCtx.sampleRate * 0.2;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                noise.connect(gain);
+                gain.connect(audioCtx.destination);
+                noise.start(now);
+            } 
+            else if (type === 'serve') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } 
+            else if (type === 'fail') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+        }
+
+        document.getElementById('soundToggle').addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundToggle').querySelector('i');
+            icon.className = soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute text-red-400';
+        });
+
+        // --- GAME STATE ---
+        let score = 0;
+        let tips = 0;
+        let lives = 3;
+        let targetScore = 150;
+        let servedCount = 0;
+        let totalCustomers = 0;
+        let isGameOver = false;
+
+        let currentPrep = null; // Currently prepped ingredient
+        let assemblyPlate = []; // Items on assembly plate
+
+        // Stove Slots State
+        const stoves = [
+            { id: 1, item: null, status: 'empty', progress: 0, timer: null },
+            { id: 2, item: null, status: 'empty', progress: 0, timer: null }
+        ];
+
+        // Recipes Definition
+        const RECIPES = {
+            BURGER: { name: 'Burger', emoji: '🍔', price: 40, ingredients: ['Bun', 'Cooked Patty', 'Lettuce'] },
+            SMOOTHIE: { name: 'Smoothie', emoji: '🥤', price: 30, ingredients: ['Berries', 'Blended Berries'] },
+            SALAD: { name: 'Salad', emoji: '🥗', price: 35, ingredients: ['Lettuce', 'Berries'] }
+        };
+
+        const CUSTOMER_AVATARS = ['🐶', '🐱', '🦊', '🐻', '🐰', '🐼'];
+
+        let customers = [];
+
+        // --- INGREDIENT & PREP LOGIC ---
+        function selectIngredient(type) {
+            if (isGameOver) return;
+            playSound('chop');
+
+            let itemObj = null;
+            if (type === 'beef') itemObj = { name: 'Raw Patty', emoji: '🥩', cookable: true };
+            if (type === 'bread') itemObj = { name: 'Bun', emoji: '🍞', cookable: false };
+            if (type === 'veggie') itemObj = { name: 'Lettuce', emoji: '🥬', cookable: false };
+            if (type === 'fruit') itemObj = { name: 'Berries', emoji: '🍓', cookable: true };
+
+            currentPrep = itemObj;
+            
+            // Update UI
+            const prepSlot = document.getElementById('prepSlot');
+            prepSlot.innerHTML = `<span class="text-xl">${itemObj.emoji}</span> <span>${itemObj.name}</span>
+                <button onclick="transferPrepToPlate()" class="ml-2 text-xs bg-amber-200 hover:bg-amber-300 px-2 py-0.5 rounded text-amber-900 font-bold">To Plate</button>`;
+            
+            document.getElementById('prepStatus').textContent = 'Ready';
+            document.getElementById('prepStatus').className = 'text-xs font-bold text-emerald-600';
+
+            // Auto update stove button states
+            updateStoveUI();
+        }
+
+        function transferPrepToPlate() {
+            if (!currentPrep) return;
+            assemblyPlate.push(currentPrep);
+            currentPrep = null;
+            document.getElementById('prepSlot').innerHTML = `<span class="text-slate-400 italic font-normal text-xs">Empty</span>`;
+            document.getElementById('prepStatus').textContent = 'Idle';
+            document.getElementById('prepStatus').className = 'text-xs font-bold text-slate-400';
+            updateAssemblyPlate();
+        }
+
+        // --- STOVE & COOKING LOGIC ---
+        function updateStoveUI() {
+            stoves.forEach(stove => {
+                const btn = document.getElementById(`stove${stove.id}Btn`);
+                if (stove.status === 'empty') {
+                    btn.disabled = !(currentPrep && currentPrep.cookable);
+                    btn.textContent = 'Cook';
+                    btn.className = 'px-3 py-1 bg-amber-400 text-amber-950 rounded-lg font-bold text-xs shadow disabled:opacity-40 disabled:cursor-not-allowed';
+                } else if (stove.status === 'cooked' || stove.status === 'burnt') {
+                    btn.disabled = false;
+                    btn.textContent = 'Pick Up';
+                    btn.className = 'px-3 py-1 bg-emerald-500 text-white rounded-lg font-bold text-xs shadow animate-pulse';
+                }
+            });
+        }
+
+        function actionStove(slotId) {
+            const stove = stoves.find(s => s.id === slotId);
+            
+            if (stove.status === 'empty' && currentPrep && currentPrep.cookable) {
+                // Start Cooking
+                stove.item = currentPrep;
+                currentPrep = null;
+                stove.status = 'cooking';
+                stove.progress = 0;
+                
+                document.getElementById('prepSlot').innerHTML = `<span class="text-slate-400 italic font-normal text-xs">Empty</span>`;
+                document.getElementById('prepStatus').textContent = 'Idle';
+
+                document.getElementById(`stove${slotId}Name`).textContent = `Cooking ${stove.item.name}...`;
+                document.getElementById(`stove${slotId}Icon`).textContent = stove.item.emoji;
+                document.getElementById(`stoveSlot${slotId}`).classList.add('cooking-sizzle');
+
+                playSound('sizzle');
+
+                stove.timer = setInterval(() => {
+                    stove.progress += 10;
+                    const progressBar = document.getElementById(`stove${slotId}Progress`);
+                    progressBar.style.width = `${stove.progress}%`;
+
+                    if (stove.progress >= 100 && stove.status === 'cooking') {
+                        // Finished Cooking Perfect
+                        stove.status = 'cooked';
+                        if (stove.item.name === 'Raw Patty') stove.item = { name: 'Cooked Patty', emoji: '🍖' };
+                        if (stove.item.name === 'Berries') stove.item = { name: 'Blended Berries', emoji: '🥤' };
+                        
+                        document.getElementById(`stove${slotId}Name`).textContent = `${stove.item.name} (Ready!)`;
+                        document.getElementById(`stove${slotId}Icon`).textContent = stove.item.emoji;
+                        progressBar.className = 'bg-emerald-500 h-full w-full';
+                        updateStoveUI();
+                    } 
+                    else if (stove.progress >= 180 && stove.status === 'cooked') {
+                        // Overcooked / Burnt
+                        stove.status = 'burnt';
+                        stove.item = { name: 'Burnt Food', emoji: '⬛' };
+                        document.getElementById(`stove${slotId}Name`).textContent = 'BURNT!';
+                        document.getElementById(`stove${slotId}Icon`).textContent = '🔥';
+                        progressBar.className = 'bg-red-600 h-full w-full';
+                        document.getElementById(`stoveSlot${slotId}`).classList.remove('cooking-sizzle');
+                        playSound('fail');
+                        clearInterval(stove.timer);
+                        updateStoveUI();
+                    }
+                }, 300);
+
+            } else if (stove.status === 'cooked' || stove.status === 'burnt') {
+                // Pick up to Plate or Trash
+                clearInterval(stove.timer);
+                document.getElementById(`stoveSlot${slotId}`).classList.remove('cooking-sizzle');
+
+                if (stove.status === 'cooked') {
+                    assemblyPlate.push(stove.item);
+                    updateAssemblyPlate();
+                } else {
+                    playSound('fail');
+                }
+
+                // Reset Stove Slot
+                stove.item = null;
+                stove.status = 'empty';
+                stove.progress = 0;
+                document.getElementById(`stove${slotId}Name`).textContent = `Pan #${slotId}: Empty`;
+                document.getElementById(`stove${slotId}Icon`).textContent = '🍳';
+                document.getElementById(`stove${slotId}Progress`).style.width = '0%';
+                document.getElementById(`stove${slotId}Progress`).className = 'bg-green-500 h-full w-0';
+                
+                updateStoveUI();
+            }
+        }
+
+        // --- ASSEMBLY PLATE LOGIC ---
+        function updateAssemblyPlate() {
+            const area = document.getElementById('assemblyArea');
+            if (assemblyPlate.length === 0) {
+                area.innerHTML = `<span class="text-slate-400 text-xs italic">Stack ingredients here...</span>`;
+                return;
+            }
+
+            area.innerHTML = assemblyPlate.map((item, idx) => `
+                <div class="bg-amber-100 border border-amber-300 rounded-lg px-2 py-1 text-xs font-bold text-amber-900 flex items-center gap-1 shadow-sm">
+                    <span>${item.emoji}</span>
+                    <span>${item.name}</span>
+                </div>
+            `).join('');
+        }
+
+        function clearPlate() {
+            if (assemblyPlate.length > 0) {
+                playSound('fail');
+                assemblyPlate = [];
+                updateAssemblyPlate();
+            }
+        }
+
+        // --- CUSTOMER & ORDER GENERATION ---
+        function spawnCustomer() {
+            if (customers.length >= 3 || isGameOver) return;
+
+            const recipes = Object.values(RECIPES);
+            const randomRecipe = recipes[Math.floor(Math.random() * recipes.length)];
+            const randomAvatar = CUSTOMER_AVATARS[Math.floor(Math.random() * CUSTOMER_AVATARS.length)];
+            
+            const customer = {
+                id: Date.now(),
+                avatar: randomAvatar,
+                recipe: randomRecipe,
+                patience: 100, // Percentage
+                timer: null
+            };
+
+            customers.push(customer);
+            totalCustomers++;
+            renderCustomers();
+
+            customer.timer = setInterval(() => {
+                customer.patience -= 2;
+                updateCustomerPatienceUI(customer);
+
+                if (customer.patience <= 0) {
+                    // Customer Left Angry
+                    clearInterval(customer.timer);
+                    removeCustomer(customer.id);
+                    playSound('fail');
+                    lives--;
+                    updateHUD();
+                    if (lives <= 0) endGame(false);
+                }
+            }, 400);
+        }
+
+        function renderCustomers() {
+            const queue = document.getElementById('customerQueue');
+            queue.innerHTML = customers.map(c => `
+                <div class="flex flex-col items-center relative animate-bounce-short">
+                    <!-- Speech Order Bubble -->
+                    <div class="bg-white border-2 border-amber-400 rounded-2xl p-2 shadow-md mb-1 flex items-center gap-2 relative">
+                        <span class="text-2xl">${c.recipe.emoji}</span>
+                        <div>
+                            <div class="font-fredoka text-xs text-amber-950">${c.recipe.name}</div>
+                            <div class="w-16 bg-slate-200 rounded-full h-1.5 mt-1 overflow-hidden">
+                                <div id="pat-${c.id}" class="bg-emerald-500 h-full" style="width: ${c.patience}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Customer Avatar -->
+                    <div class="text-4xl filter drop-shadow">${c.avatar}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateCustomerPatienceUI(customer) {
+            const bar = document.getElementById(`pat-${customer.id}`);
+            if (bar) {
+                bar.style.width = `${customer.patience}%`;
+                if (customer.patience < 30) {
+                    bar.className = 'bg-red-500 h-full transition-all duration-200';
+                } else if (customer.patience < 60) {
+                    bar.className = 'bg-yellow-500 h-full transition-all duration-200';
+                }
+            }
+        }
+
+        function removeCustomer(id) {
+            const index = customers.findIndex(c => c.id === id);
+            if (index !== -1) {
+                clearInterval(customers[index].timer);
+                customers.splice(index, 1);
+                renderCustomers();
+            }
+        }
+
+        // --- SERVE DISH LOGIC ---
+        function serveDish() {
+            if (assemblyPlate.length === 0 || customers.length === 0 || isGameOver) return;
+
+            const plateNames = assemblyPlate.map(i => i.name).sort();
+
+            // Match against active customers
+            let matchedCustomerIndex = -1;
+            for (let i = 0; i < customers.length; i++) {
+                const reqNames = [...customers[i].recipe.ingredients].sort();
+                if (JSON.stringify(plateNames) === JSON.stringify(reqNames)) {
+                    matchedCustomerIndex = i;
+                    break;
+                }
+            }
+
+            if (matchedCustomerIndex !== -1) {
+                // Success!
+                const matched = customers[matchedCustomerIndex];
+                const tipEarned = matched.patience > 50 ? 10 : 5;
+                const earned = matched.recipe.price + tipEarned;
+                
+                score += earned;
+                tips += tipEarned;
+                servedCount++;
+                
+                playSound('serve');
+                removeCustomer(matched.id);
+                
+                assemblyPlate = [];
+                updateAssemblyPlate();
+                updateHUD();
+
+                if (score >= targetScore) {
+                    endGame(true);
+                }
+            } else {
+                // Incorrect Dish
+                playSound('fail');
+                alert("That doesn't match any customer's order!");
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('scoreText').textContent = `RM ${score}`;
+            document.getElementById('livesText').textContent = '❤️'.repeat(Math.max(0, lives));
+        }
+
+        // --- GAME FLOW CONTROL ---
+        function endGame(isVictory) {
+            isGameOver = true;
+            customers.forEach(c => clearInterval(c.timer));
+            stoves.forEach(s => clearInterval(s.timer));
+
+            const overlay = document.getElementById('endOverlay');
+            overlay.classList.remove('hidden');
+
+            if (isVictory) {
+                document.getElementById('endEmoji').textContent = '🌟';
+                document.getElementById('endTitle').textContent = 'Target Reached!';
+                document.getElementById('endSubtitle').textContent = "Mama is super proud of your fast cooking!";
+            } else {
+                document.getElementById('endEmoji').textContent = '😿';
+                document.getElementById('endTitle').textContent = 'Kitchen Closed!';
+                document.getElementById('endSubtitle').textContent = 'Too many unhappy customers today...';
+            }
+
+            document.getElementById('statServed').textContent = servedCount;
+            document.getElementById('statTips').textContent = `RM ${tips}`;
+            const happiness = totalCustomers > 0 ? Math.round((servedCount / totalCustomers) * 100) : 100;
+            document.getElementById('statHappiness').textContent = `${happiness}%`;
+        }
+
+        function resetGame() {
+            score = 0;
+            tips = 0;
+            lives = 3;
+            servedCount = 0;
+            totalCustomers = 0;
+            isGameOver = false;
+            assemblyPlate = [];
+            currentPrep = null;
+
+            customers.forEach(c => clearInterval(c.timer));
+            customers = [];
+
+            stoves.forEach(s => {
+                clearInterval(s.timer);
+                s.item = null;
+                s.status = 'empty';
+                s.progress = 0;
+                document.getElementById(`stove${s.id}Name`).textContent = `Pan #${s.id}: Empty`;
+                document.getElementById(`stove${s.id}Icon`).textContent = '🍳';
+                document.getElementById(`stove${s.id}Progress`).style.width = '0%';
+            });
+
+            document.getElementById('prepSlot').innerHTML = `<span class="text-slate-400 italic font-normal text-xs">Empty</span>`;
+            document.getElementById('prepStatus').textContent = 'Idle';
+            document.getElementById('endOverlay').classList.add('hidden');
+
+            updateAssemblyPlate();
+            updateStoveUI();
+            updateHUD();
+
+            // Spawn initial customer
+            spawnCustomer();
+        }
+
+        // Customer Spawner Loop
+        setInterval(() => {
+            if (!isGameOver && customers.length < 3) {
+                spawnCustomer();
+            }
+        }, 5000);
+
+        // Start game on load
+        window.onload = () => {
+            resetGame();
+        };
+    </script>
+</body>
+</html>

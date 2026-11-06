@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>PixelPals: Virtual Dragon Pet</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Quicksand:wght@600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #fbcfe8 0%, #ddd6fe 50%, #c7d2fe 100%);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            overflow: hidden;
+        }
+
+        .font-pixel {
+            font-family: 'VT323', monospace;
+        }
+
+        /* Handheld Device Glass Shell */
+        .tamagotchi-shell {
+            background: linear-gradient(145deg, #ffffff, #f3e8ff);
+            box-shadow: 
+                0 20px 50px rgba(147, 51, 234, 0.25),
+                inset 0 4px 10px rgba(255, 255, 255, 0.9),
+                inset 0 -6px 12px rgba(192, 132, 252, 0.4);
+            border: 4px solid #f0abfc;
+        }
+
+        /* LCD Screen Bezel */
+        .lcd-screen {
+            background: #e0f2fe;
+            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 3px solid #94a3b8;
+        }
+
+        /* Night Mode Screen Effect */
+        .lcd-screen.night-mode {
+            background: #0f172a !important;
+        }
+
+        /* Arcade Button Styles */
+        .retro-btn {
+            background: linear-gradient(145deg, #f472b6, #db2777);
+            box-shadow: 0 4px 0 #9d174d, 0 6px 10px rgba(0,0,0,0.15);
+            transition: all 0.1s ease;
+        }
+        .retro-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #9d174d, 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        /* Stat Bar Animated Fills */
+        .stat-bar-fill {
+            transition: width 0.4s ease-in-out, background-color 0.4s ease;
+        }
+
+        /* Floating particles */
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(0.8); opacity: 1; }
+            100% { transform: translateY(-40px) scale(1.2); opacity: 0; }
+        }
+        .floating-heart {
+            position: absolute;
+            animation: floatUp 1s ease-out forwards;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex items-center justify-center p-3">
+
+    <!-- MAIN TAMAGOTCHI SHELL CONTAINER -->
+    <div class="relative w-full max-w-sm sm:max-w-md h-full max-h-[780px] tamagotchi-shell rounded-[50px] p-5 sm:p-7 flex flex-col justify-between items-center shadow-2xl">
+        
+        <!-- DEVICE BRANDING HEADER -->
+        <div class="w-full flex justify-between items-center px-2 mb-1">
+            <div class="flex items-center space-x-2">
+                <span class="w-3 h-3 rounded-full bg-pink-400 animate-ping"></span>
+                <span class="font-pixel text-xl sm:text-2xl font-bold tracking-widest text-purple-700">PIXEL-PALS</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="bg-white/80 px-2.5 py-0.5 rounded-full border border-purple-200 text-xs font-bold text-purple-800 flex items-center gap-1 shadow-sm">
+                    <i class="fas fa-coins text-amber-400"></i>
+                    <span id="coinDisplay">0</span>
+                </div>
+                <button id="soundToggle" class="w-7 h-7 rounded-full bg-white/80 text-purple-600 text-xs flex items-center justify-center border border-purple-200 shadow-sm">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- LCD PET SCREEN CONTAINER -->
+        <div id="screenContainer" class="relative w-full aspect-[4/3] lcd-screen rounded-3xl overflow-hidden flex flex-col justify-between p-3 border-4 border-slate-300 shadow-inner">
+            
+            <!-- TOP STATS BAR OVERLAY -->
+            <div class="w-full grid grid-cols-4 gap-1.5 z-10 bg-white/60 backdrop-blur-md p-1.5 rounded-xl border border-white/80 shadow-sm text-[10px] font-bold text-slate-700">
+                <!-- Hunger -->
+                <div>
+                    <div class="flex justify-between mb-0.5"><span class="text-orange-600">🍎</span><span id="valHunger">100%</span></div>
+                    <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                        <div id="barHunger" class="stat-bar-fill bg-orange-400 h-full w-full"></div>
+                    </div>
+                </div>
+                <!-- Happy -->
+                <div>
+                    <div class="flex justify-between mb-0.5"><span class="text-pink-600">💖</span><span id="valHappy">100%</span></div>
+                    <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                        <div id="barHappy" class="stat-bar-fill bg-pink-400 h-full w-full"></div>
+                    </div>
+                </div>
+                <!-- Energy -->
+                <div>
+                    <div class="flex justify-between mb-0.5"><span class="text-yellow-600">⚡</span><span id="valEnergy">100%</span></div>
+                    <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                        <div id="barEnergy" class="stat-bar-fill bg-yellow-400 h-full w-full"></div>
+                    </div>
+                </div>
+                <!-- Clean -->
+                <div>
+                    <div class="flex justify-between mb-0.5"><span class="text-cyan-600">🧼</span><span id="valClean">100%</span></div>
+                    <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                        <div id="barClean" class="stat-bar-fill bg-cyan-400 h-full w-full"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CANVAS FOR ANIMATED PET & SCENE -->
+            <div id="canvasWrapper" class="relative w-full flex-grow flex items-center justify-center">
+                <canvas id="petCanvas" class="w-full h-full block cursor-pointer"></canvas>
+                
+                <!-- Floating Hearts Container -->
+                <div id="particleContainer" class="absolute inset-0 pointer-events-none"></div>
+
+                <!-- NIGHT OVERLAY -->
+                <div id="nightOverlay" class="hidden absolute inset-0 bg-slate-950/70 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                    <span class="font-pixel text-yellow-200 text-2xl tracking-widest animate-pulse">Z z z . . .</span>
+                </div>
+            </div>
+
+            <!-- BOTTOM AGE & STAGE BANNER -->
+            <div class="w-full flex justify-between items-center text-[11px] font-bold text-slate-600 px-1 z-10">
+                <span id="petStageText" class="bg-purple-100/80 px-2 py-0.5 rounded-md border border-purple-200">Stage: Baby Spark</span>
+                <span id="petAgeText" class="bg-indigo-100/80 px-2 py-0.5 rounded-md border border-indigo-200">Age: 0 Days</span>
+            </div>
+
+            <!-- MINI-GAME CANVAS OVERLAY (Starts Hidden) -->
+            <div id="miniGameOverlay" class="hidden absolute inset-0 bg-indigo-950 z-20 flex flex-col justify-between p-2">
+                <div class="flex justify-between items-center text-xs font-bold text-white px-2">
+                    <span>Stars: <span id="gameScoreText" class="text-yellow-400 font-pixel text-lg">0</span></span>
+                    <button onclick="exitMiniGame()" class="bg-red-500 text-white px-2 py-0.5 rounded text-[10px]">EXIT</button>
+                </div>
+                <canvas id="miniGameCanvas" class="w-full flex-grow block rounded-xl bg-indigo-900 border border-indigo-700"></canvas>
+            </div>
+        </div>
+
+        <!-- ACTION CONTROLS DASHBOARD GRID -->
+        <div class="w-full grid grid-cols-3 gap-2.5 my-3 z-10">
+            <!-- Feed -->
+            <button onclick="feedPet()" class="retro-btn text-white p-2.5 rounded-2xl flex flex-col items-center justify-center">
+                <i class="fas fa-utensils text-lg mb-0.5"></i>
+                <span class="text-[11px] font-bold font-pixel tracking-wider uppercase">FEED</span>
+            </button>
+            <!-- Play / Mini-game -->
+            <button onclick="startMiniGame()" class="retro-btn text-white p-2.5 rounded-2xl flex flex-col items-center justify-center">
+                <i class="fas fa-gamepad text-lg mb-0.5"></i>
+                <span class="text-[11px] font-bold font-pixel tracking-wider uppercase">PLAY</span>
+            </button>
+            <!-- Sleep -->
+            <button onclick="toggleSleep()" class="retro-btn text-white p-2.5 rounded-2xl flex flex-col items-center justify-center">
+                <i class="fas fa-moon text-lg mb-0.5"></i>
+                <span class="text-[11px] font-bold font-pixel tracking-wider uppercase">SLEEP</span>
+            </button>
+            <!-- Clean / Bathe -->
+            <button onclick="cleanPet()" class="retro-btn text-white p-2.5 rounded-2xl flex flex-col items-center justify-center">
+                <i class="fas fa-shower text-lg mb-0.5"></i>
+                <span class="text-[11px] font-bold font-pixel tracking-wider uppercase">CLEAN</span>
+            </button>
+            <!-- Medicine -->
+            <button onclick="healPet()" class="retro-btn text-white p-2.5 rounded-2xl flex flex-col items-center justify-center">
+                <i class="fas fa-prescription-bottle-alt text-lg mb-0.5"></i>
+                <span class="text-[11px] font-bold font-pixel tracking-wider uppercase">HEAL</span>
+            </button>
+            <!-- Shop -->
+            <button onclick="openShop()" class="retro-btn text-white p-2.5 rounded-2xl flex flex-col items-center justify-center">
+                <i class="fas fa-store text-lg mb-0.5"></i>
+                <span class="text-[11px] font-bold font-pixel tracking-wider uppercase">SHOP</span>
+            </button>
+        </div>
+
+        <!-- BOTTOM PHYSICAL DECORATIVE BUTTONS -->
+        <div class="w-full flex justify-around items-center px-6">
+            <div class="w-4 h-4 rounded-full bg-pink-300 border-2 border-pink-400"></div>
+            <div class="w-6 h-6 rounded-full bg-purple-300 border-2 border-purple-400"></div>
+            <div class="w-4 h-4 rounded-full bg-indigo-300 border-2 border-indigo-400"></div>
+        </div>
+
+    </div>
+
+    <!-- ACCESSORIES SHOP MODAL -->
+    <div id="shopModal" class="hidden absolute inset-0 bg-slate-950/70 backdrop-blur-sm z-30 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-5 max-w-xs w-full border-4 border-purple-300 shadow-2xl text-center">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-pixel text-2xl font-bold text-purple-900">PET BOUTIQUE</h3>
+                <button onclick="closeShop()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <!-- Item 1: Party Hat -->
+                <div class="bg-purple-50 border border-purple-200 rounded-2xl p-2 flex flex-col items-center">
+                    <span class="text-3xl mb-1">🥳</span>
+                    <span class="text-xs font-bold text-purple-900">Party Hat</span>
+                    <button onclick="buyAccessory('hat')" class="mt-2 w-full py-1 bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs rounded-xl shadow">
+                        50 Coins
+                    </button>
+                </div>
+                <!-- Item 2: Sunglasses -->
+                <div class="bg-purple-50 border border-purple-200 rounded-2xl p-2 flex flex-col items-center">
+                    <span class="text-3xl mb-1">🕶️</span>
+                    <span class="text-xs font-bold text-purple-900">Cool Glasses</span>
+                    <button onclick="buyAccessory('glasses')" class="mt-2 w-full py-1 bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs rounded-xl shadow">
+                        80 Coins
+                    </button>
+                </div>
+                <!-- Item 3: Crown -->
+                <div class="bg-purple-50 border border-purple-200 rounded-2xl p-2 flex flex-col items-center">
+                    <span class="text-3xl mb-1">👑</span>
+                    <span class="text-xs font-bold text-purple-900">Royal Crown</span>
+                    <button onclick="buyAccessory('crown')" class="mt-2 w-full py-1 bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs rounded-xl shadow">
+                        150 Coins
+                    </button>
+                </div>
+                <!-- Item 4: Dragon Treat -->
+                <div class="bg-purple-50 border border-purple-200 rounded-2xl p-2 flex flex-col items-center">
+                    <span class="text-3xl mb-1">🧁</span>
+                    <span class="text-xs font-bold text-purple-900">Super Cake</span>
+                    <button onclick="buyAccessory('cake')" class="mt-2 w-full py-1 bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold text-xs rounded-xl shadow">
+                        30 Coins
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="closeShop()" class="w-full py-2 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs">Close</button>
+        </div>
+    </div>
+
+    <!-- MAIN GAME ENGINE SCRIPT -->
+    <script>
+        // --- AUDIO SYNTH ENGINE (Web Audio API) ---
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+
+            if (type === 'eat') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if (type === 'happy') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.08);
+                osc.frequency.setValueAtTime(783.99, now + 0.16);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(now); osc.stop(now + 0.25);
+            } else if (type === 'clean') {
+                const bufSize = audioCtx.sampleRate * 0.15;
+                const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+                const data = buf.getChannelData(0);
+                for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+                const src = audioCtx.createBufferSource();
+                src.buffer = buf;
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                src.connect(gain); gain.connect(audioCtx.destination);
+                src.start(now);
+            } else if (type === 'coin') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(987.77, now);
+                osc.frequency.setValueAtTime(1318.51, now + 0.08);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(now); osc.stop(now + 0.2);
+            }
+        }
+
+        document.getElementById('soundToggle').addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundToggle').querySelector('i');
+            icon.className = soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute text-red-400';
+        });
+
+        // --- PET STATE ENGINE ---
+        const pet = {
+            hunger: 80,
+            happiness: 90,
+            energy: 85,
+            cleanliness: 90,
+            isSleeping: false,
+            isSick: false,
+            hasPoop: false,
+            ageTicks: 0,
+            ageDays: 0,
+            stage: 'Baby', // Baby, Teen, Elder
+            coins: 100,
+            accessory: 'none', // 'hat', 'glasses', 'crown'
+            animationState: 'idle', // idle, eating, happy, scrubbing
+            animFrame: 0
+        };
+
+        // --- CANVAS RENDERER ---
+        const canvas = document.getElementById('petCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let animLoopId = null;
+
+        function startAnimationLoop() {
+            let lastTime = 0;
+            function loop(timestamp) {
+                if (timestamp - lastTime > 120) { // ~8 FPS retro feel
+                    pet.animFrame = (pet.animFrame + 1) % 4;
+                    lastTime = timestamp;
+                }
+                renderPetScene();
+                animLoopId = requestAnimationFrame(loop);
+            }
+            animLoopId = requestAnimationFrame(loop);
+        }
+
+        function renderPetScene() {
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2 + 10;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // 1. Draw Floor & Background Decor
+            ctx.fillStyle = pet.isSleeping ? '#1e1b4b' : '#bae6fd';
+            ctx.fillRect(0, 0, w, h);
+
+            // Floor Line
+            ctx.strokeStyle = pet.isSleeping ? '#312e81' : '#7dd3fc';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(0, h - 30);
+            ctx.lineTo(w, h - 30);
+            ctx.stroke();
+
+            // 2. Draw Poop if dirty
+            if (pet.hasPoop) {
+                ctx.fillStyle = '#78350f';
+                ctx.beginPath();
+                ctx.arc(cx - 60, h - 35, 10, 0, Math.PI * 2);
+                ctx.arc(cx - 60, h - 42, 6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 3. Draw Pixel Dragon Pet Body
+            ctx.save();
+
+            // Hover / Bounce displacement
+            let offsetY = Math.sin(pet.animFrame * Math.PI / 2) * 5;
+            if (pet.animationState === 'happy') offsetY = -Math.abs(Math.sin(pet.animFrame * Math.PI) * 15);
+            if (pet.isSleeping) offsetY = 4;
+
+            const petY = cy + offsetY;
+
+            // Dragon Color Palette
+            const bodyColor = pet.isSick ? '#a7f3d0' : '#c084fc'; // Purple or sickly mint green
+            const bellyColor = '#fef08a'; // Yellow belly
+
+            // Body Oval
+            ctx.fillStyle = bodyColor;
+            ctx.beginPath();
+            ctx.ellipse(cx, petY, 35, 32, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Yellow Belly
+            ctx.fillStyle = bellyColor;
+            ctx.beginPath();
+            ctx.ellipse(cx, petY + 8, 20, 18, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cute Dragon Wings (if Teen or Elder)
+            if (pet.stage !== 'Egg') {
+                ctx.fillStyle = '#a855f7';
+                // Left Wing
+                ctx.beginPath();
+                ctx.moveTo(cx - 30, petY - 5);
+                ctx.quadraticCurveTo(cx - 55, petY - 25, cx - 35, petY + 5);
+                ctx.fill();
+                // Right Wing
+                ctx.beginPath();
+                ctx.moveTo(cx + 30, petY - 5);
+                ctx.quadraticCurveTo(cx + 55, petY - 25, cx + 35, petY + 5);
+                ctx.fill();
+            }
+
+            // Eyes
+            ctx.fillStyle = '#0f172a';
+            if (pet.isSleeping) {
+                // Closed Sleep Eyes (Zzz)
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(cx - 12, petY - 6, 5, 0, Math.PI);
+                ctx.arc(cx + 12, petY - 6, 5, 0, Math.PI);
+                ctx.stroke();
+            } else if (pet.animationState === 'happy') {
+                // Happy Arc Eyes
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(cx - 12, petY - 6, 5, Math.PI, 0);
+                ctx.arc(cx + 12, petY - 6, 5, Math.PI, 0);
+                ctx.stroke();
+            } else {
+                // Normal Cute Eyes
+                ctx.beginPath();
+                ctx.arc(cx - 12, petY - 6, 5, 0, Math.PI * 2);
+                ctx.arc(cx + 12, petY - 6, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eye Shine Catchlight
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(cx - 14, petY - 8, 2, 0, Math.PI * 2);
+                ctx.arc(cx + 10, petY - 8, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Blush Cheeks
+            ctx.fillStyle = 'rgba(244, 114, 182, 0.5)';
+            ctx.beginPath();
+            ctx.arc(cx - 20, petY + 4, 5, 0, Math.PI * 2);
+            ctx.arc(cx + 20, petY + 4, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Mouth
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 2;
+            if (pet.animationState === 'eating') {
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath();
+                ctx.arc(cx, petY + 4, 6, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.arc(cx, petY + 2, 4, 0, Math.PI);
+                ctx.stroke();
+            }
+
+            // 4. Draw Equipped Accessory
+            if (pet.accessory === 'hat') {
+                ctx.fillStyle = '#f43f5e';
+                ctx.beginPath();
+                ctx.moveTo(cx - 15, petY - 28);
+                ctx.lineTo(cx + 15, petY - 28);
+                ctx.lineTo(cx, petY - 55);
+                ctx.fill();
+            } else if (pet.accessory === 'glasses') {
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(cx - 22, petY - 12, 16, 10);
+                ctx.fillRect(cx + 6, petY - 12, 16, 10);
+                ctx.fillRect(cx - 6, petY - 9, 12, 3);
+            } else if (pet.accessory === 'crown') {
+                ctx.fillStyle = '#eab308';
+                ctx.beginPath();
+                ctx.moveTo(cx - 18, petY - 28);
+                ctx.lineTo(cx - 18, petY - 45);
+                ctx.lineTo(cx - 6, petY - 34);
+                ctx.lineTo(cx, petY - 48);
+                ctx.lineTo(cx + 6, petY - 34);
+                ctx.lineTo(cx + 18, petY - 45);
+                ctx.lineTo(cx + 18, petY - 28);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        // --- STATS DECAY TICKER ---
+        setInterval(() => {
+            if (pet.isSleeping) {
+                pet.energy = Math.min(100, pet.energy + 4);
+                pet.hunger = Math.max(0, pet.hunger - 0.5);
+            } else {
+                pet.hunger = Math.max(0, pet.hunger - 1.5);
+                pet.happiness = Math.max(0, pet.happiness - 1);
+                pet.energy = Math.max(0, pet.energy - 1);
+                pet.cleanliness = Math.max(0, pet.cleanliness - 0.8);
+            }
+
+            // Poop Spawning
+            if (pet.cleanliness < 40 && Math.random() < 0.2) {
+                pet.hasPoop = true;
+            }
+
+            // Age Progress
+            pet.ageTicks++;
+            if (pet.ageTicks % 60 === 0) {
+                pet.ageDays++;
+                if (pet.ageDays === 2) pet.stage = 'Teen Spark';
+                if (pet.ageDays === 5) pet.stage = 'Elder Dragon';
+            }
+
+            updateUI();
+        }, 3000);
+
+        function updateUI() {
+            document.getElementById('valHunger').textContent = `${Math.round(pet.hunger)}%`;
+            document.getElementById('barHunger').style.width = `${pet.hunger}%`;
+
+            document.getElementById('valHappy').textContent = `${Math.round(pet.happiness)}%`;
+            document.getElementById('barHappy').style.width = `${pet.happiness}%`;
+
+            document.getElementById('valEnergy').textContent = `${Math.round(pet.energy)}%`;
+            document.getElementById('barEnergy').style.width = `${pet.energy}%`;
+
+            document.getElementById('valClean').textContent = `${Math.round(pet.cleanliness)}%`;
+            document.getElementById('barClean').style.width = `${pet.cleanliness}%`;
+
+            document.getElementById('coinDisplay').textContent = pet.coins;
+            document.getElementById('petStageText').textContent = `Stage: ${pet.stage}`;
+            document.getElementById('petAgeText').textContent = `Age: ${pet.ageDays} Days`;
+        }
+
+        // --- INTERACTIVE ACTIONS ---
+        function feedPet() {
+            if (pet.isSleeping) return;
+            playSound('eat');
+            pet.hunger = Math.min(100, pet.hunger + 25);
+            pet.animationState = 'eating';
+            setTimeout(() => { pet.animationState = 'idle'; }, 1200);
+            updateUI();
+        }
+
+        function cleanPet() {
+            playSound('clean');
+            pet.cleanliness = 100;
+            pet.hasPoop = false;
+            pet.animationState = 'happy';
+            setTimeout(() => { pet.animationState = 'idle'; }, 1000);
+            updateUI();
+        }
+
+        function healPet() {
+            playSound('happy');
+            pet.isSick = false;
+            pet.happiness = Math.min(100, pet.happiness + 20);
+            updateUI();
+        }
+
+        function toggleSleep() {
+            pet.isSleeping = !pet.isSleeping;
+            playSound('happy');
+            const overlay = document.getElementById('nightOverlay');
+            const screen = document.getElementById('screenContainer');
+
+            if (pet.isSleeping) {
+                overlay.classList.remove('hidden');
+                screen.classList.add('night-mode');
+            } else {
+                overlay.classList.add('hidden');
+                screen.classList.remove('night-mode');
+            }
+        }
+
+        // --- PET TOUCH / PETTING HEARTS ---
+        canvas.addEventListener('click', (e) => {
+            if (pet.isSleeping) return;
+            playSound('happy');
+            pet.happiness = Math.min(100, pet.happiness + 5);
+            pet.animationState = 'happy';
+            setTimeout(() => { pet.animationState = 'idle'; }, 1000);
+
+            // Spawn heart particle
+            const rect = canvas.getBoundingClientRect();
+            const heart = document.createElement('div');
+            heart.className = 'floating-heart text-2xl';
+            heart.innerHTML = '💖';
+            heart.style.left = `${e.clientX - rect.left - 10}px`;
+            heart.style.top = `${e.clientY - rect.top - 10}px`;
+            document.getElementById('particleContainer').appendChild(heart);
+            setTimeout(() => heart.remove(), 1000);
+
+            updateUI();
+        });
+
+        // --- MINI GAME: STAR CATCHER ---
+        let miniGameRunning = false;
+        let miniScore = 0;
+        let stars = [];
+        let basketX = 100;
+
+        function startMiniGame() {
+            if (pet.isSleeping) return;
+            miniGameRunning = true;
+            miniScore = 0;
+            stars = [];
+            document.getElementById('miniGameOverlay').classList.remove('hidden');
+            
+            const mgCanvas = document.getElementById('miniGameCanvas');
+            mgCanvas.width = mgCanvas.parentElement.clientWidth;
+            mgCanvas.height = mgCanvas.parentElement.clientHeight;
+
+            mgCanvas.addEventListener('touchmove', handleMiniTouch);
+            mgCanvas.addEventListener('mousemove', handleMiniMouse);
+
+            runMiniGameLoop();
+        }
+
+        function handleMiniTouch(e) {
+            const rect = e.target.getBoundingClientRect();
+            basketX = e.touches[0].clientX - rect.left;
+        }
+        function handleMiniMouse(e) {
+            const rect = e.target.getBoundingClientRect();
+            basketX = e.clientX - rect.left;
+        }
+
+        function exitMiniGame() {
+            miniGameRunning = false;
+            document.getElementById('miniGameOverlay').classList.add('hidden');
+            pet.coins += miniScore * 2;
+            pet.happiness = Math.min(100, pet.happiness + 15);
+            updateUI();
+        }
+
+        function runMiniGameLoop() {
+            if (!miniGameRunning) return;
+            const mgCanvas = document.getElementById('miniGameCanvas');
+            const mgCtx = mgCanvas.getContext('2d');
+            const w = mgCanvas.width;
+            const h = mgCanvas.height;
+
+            mgCtx.clearRect(0, 0, w, h);
+
+            // Spawn stars
+            if (Math.random() < 0.05) {
+                stars.push({ x: Math.random() * (w - 20) + 10, y: 0, speed: Math.random() * 2 + 2 });
+            }
+
+            // Update & Draw Stars
+            stars.forEach((s, idx) => {
+                s.y += s.speed;
+                mgCtx.fillStyle = '#facc15';
+                mgCtx.font = '18px sans-serif';
+                mgCtx.fillText('⭐', s.x, s.y);
+
+                // Catch Star Check
+                if (s.y >= h - 35 && Math.abs(s.x - basketX) < 30) {
+                    miniScore++;
+                    playSound('coin');
+                    document.getElementById('gameScoreText').textContent = miniScore;
+                    stars.splice(idx, 1);
+                } else if (s.y > h) {
+                    stars.splice(idx, 1);
+                }
+            });
+
+            // Draw Basket / Dragon Hand
+            mgCtx.fillStyle = '#c084fc';
+            mgCtx.fillRect(basketX - 25, h - 20, 50, 12);
+
+            requestAnimationFrame(runMiniGameLoop);
+        }
+
+        // --- SHOP ENGINE ---
+        function openShop() { document.getElementById('shopModal').classList.remove('hidden'); }
+        function closeShop() { document.getElementById('shopModal').classList.add('hidden'); }
+
+        function buyAccessory(item) {
+            if (item === 'hat' && pet.coins >= 50) {
+                pet.coins -= 50; pet.accessory = 'hat'; playSound('coin');
+            } else if (item === 'glasses' && pet.coins >= 80) {
+                pet.coins -= 80; pet.accessory = 'glasses'; playSound('coin');
+            } else if (item === 'crown' && pet.coins >= 150) {
+                pet.coins -= 150; pet.accessory = 'crown'; playSound('coin');
+            } else if (item === 'cake' && pet.coins >= 30) {
+                pet.coins -= 30; pet.hunger = 100; pet.happiness = 100; playSound('eat');
+            }
+            updateUI();
+            closeShop();
+        }
+
+        // INIT GAME ON LOAD
+        window.onload = () => {
+            resizeCanvas();
+            startAnimationLoop();
+            updateUI();
+        };
+    </script>
+</body>
+</html>

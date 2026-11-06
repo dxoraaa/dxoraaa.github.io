@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cute Boutique Tycoon</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            font-family: 'Fredoka', 'Quicksand', sans-serif;
+            user-select: none;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #fdf2f8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #f472b6;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ec4899;
+        }
+
+        /* Animated Floating Text */
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            50% { opacity: 1; transform: translateY(-25px) scale(1.15); }
+            100% { opacity: 0; transform: translateY(-50px) scale(0.9); }
+        }
+
+        .floating-text {
+            position: absolute;
+            pointer-events: none;
+            animation: floatUp 1.2s ease-out forwards;
+            font-weight: bold;
+            z-index: 100;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Pulse glow animation for buttons */
+        @keyframes softGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(244, 114, 182, 0.4); }
+            50% { box-shadow: 0 0 20px rgba(244, 114, 182, 0.8); }
+        }
+
+        .glow-btn {
+            animation: softGlow 2s infinite;
+        }
+
+        /* Canvas styling */
+        canvas {
+            touch-action: none;
+            border-radius: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-pink-50 text-slate-800 min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-pink-200 sticky top-0 z-40 px-4 py-3 shadow-sm">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3">
+            
+            <!-- Logo & Level -->
+            <div class="flex items-center space-x-3">
+                <div class="w-11 h-11 bg-gradient-to-tr from-pink-400 to-rose-400 rounded-2xl flex items-center justify-center text-white shadow-md transform hover:rotate-6 transition-transform">
+                    <i class="fa-solid font-bold fa-store text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent leading-tight">
+                        Cute Boutique
+                    </h1>
+                    <div class="flex items-center space-x-2 text-xs font-semibold text-slate-500">
+                        <span id="boutique-level-badge" class="bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full border border-pink-200">
+                            Cozy Shop (Lv 1)
+                        </span>
+                        <span>•</span>
+                        <span id="cute-multiplier" class="text-purple-600 font-bold">1.0x Bonus</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Currencies & Stats -->
+            <div class="flex items-center flex-wrap gap-2 sm:gap-4">
+                <!-- Cash -->
+                <div class="bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-2xl flex items-center space-x-2 shadow-inner">
+                    <div class="w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center text-white text-xs shadow">
+                        <i class="fa-solid fa-dollar-sign"></i>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-emerald-600 uppercase font-bold leading-none">Cash</div>
+                        <div id="currency-cash" class="font-extrabold text-emerald-700 text-base leading-tight">$0</div>
+                    </div>
+                </div>
+
+                <!-- Cute Rating Points -->
+                <div class="bg-purple-50 border border-purple-200 px-3 py-1.5 rounded-2xl flex items-center space-x-2 shadow-inner">
+                    <div class="w-7 h-7 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs shadow">
+                        <i class="fa-solid fa-heart"></i>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-purple-600 uppercase font-bold leading-none">Cute Rating</div>
+                        <div id="currency-cute" class="font-extrabold text-purple-700 text-base leading-tight">0 ✨</div>
+                    </div>
+                </div>
+
+                <!-- Gems -->
+                <div class="bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-2xl flex items-center space-x-2 shadow-inner">
+                    <div class="w-7 h-7 bg-rose-500 rounded-full flex items-center justify-center text-white text-xs shadow">
+                        <i class="fa-solid fa-gem"></i>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-rose-600 uppercase font-bold leading-none">Gems</div>
+                        <div id="currency-gems" class="font-extrabold text-rose-700 text-base leading-tight">5</div>
+                    </div>
+                </div>
+
+                <!-- Audio Toggle & Reset -->
+                <button id="btn-audio" class="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-pink-100 hover:text-pink-600 transition" title="Toggle Sound Effects">
+                    <i id="audio-icon" class="fa-solid fa-volume-high"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <main class="max-w-7xl w-full mx-auto p-3 sm:p-5 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-5">
+        
+        <!-- Left Side: Interactive Game Canvas & Live Shop Area (7 Cols) -->
+        <section class="lg:col-span-7 flex flex-col gap-3">
+            
+            <!-- Canvas Container -->
+            <div class="relative bg-white p-2 rounded-3xl border-4 border-pink-200 shadow-xl overflow-hidden flex flex-col items-center">
+                
+                <!-- Floating Info Bar above canvas -->
+                <div class="w-full bg-pink-100/70 border border-pink-200 rounded-2xl px-4 py-2 mb-2 flex justify-between items-center text-xs font-semibold text-pink-800">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-users text-pink-600"></i>
+                        <span>Customers: <b id="stat-active-customers" class="text-pink-900">0</b>/<span id="stat-max-customers">5</span></span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-bolt text-amber-500"></i>
+                        <span>Capacity Boost: <b id="stat-capacity-bonus" class="text-amber-700">+0%</b></span>
+                    </div>
+                    <div id="vip-spawn-alert" class="hidden animate-pulse bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full text-[10px] font-extrabold">
+                        🌟 VIP ENTERING!
+                    </div>
+                </div>
+
+                <!-- Canvas -->
+                <div class="relative w-full aspect-[4/3] max-h-[500px] flex items-center justify-center">
+                    <canvas id="shopCanvas" class="w-full h-full shadow-inner bg-slate-900"></canvas>
+                    <div id="floating-container" class="absolute inset-0 pointer-events-none"></div>
+                </div>
+
+                <!-- Canvas Controls & Quick Actions -->
+                <div class="w-full grid grid-cols-3 gap-2 mt-3">
+                    <button id="btn-call-vip" class="bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white py-2 px-3 rounded-2xl text-xs font-bold shadow-md hover:shadow-lg transition flex items-center justify-center space-x-1.5 active:scale-95">
+                        <i class="fa-solid fa-crown text-sm"></i>
+                        <span>Invite VIP ($100)</span>
+                    </button>
+
+                    <button id="btn-boost-speed" class="bg-gradient-to-r from-purple-400 to-indigo-400 hover:from-purple-500 hover:to-indigo-500 text-white py-2 px-3 rounded-2xl text-xs font-bold shadow-md hover:shadow-lg transition flex items-center justify-center space-x-1.5 active:scale-95">
+                        <i class="fa-solid fa-bolt text-sm"></i>
+                        <span>Rush Hour ($150)</span>
+                    </button>
+
+                    <button id="btn-collect-tips" class="bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white py-2 px-3 rounded-2xl text-xs font-bold shadow-md hover:shadow-lg transition flex items-center justify-center space-x-1.5 active:scale-95">
+                        <i class="fa-solid fa-hand-holding-dollar text-sm"></i>
+                        <span>Collect Tips</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Stylist Help Banner -->
+            <div class="bg-gradient-to-r from-pink-400 to-rose-400 rounded-2xl p-3 text-white shadow-md flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl">
+                        💡
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-pink-100">Boutique Tip</div>
+                        <div class="text-xs font-medium">Click on waiting customers or cashier desks to assist them manually if staff are busy!</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Side: Interactive Management Tabs & Shop Upgrades (5 Cols) -->
+        <section class="lg:col-span-5 flex flex-col bg-white rounded-3xl border-4 border-pink-200 shadow-xl overflow-hidden h-[620px]">
+            
+            <!-- Navigation Tabs Header -->
+            <div class="bg-pink-100/80 p-2 border-b border-pink-200 flex justify-between gap-1 overflow-x-auto scrollbar-none">
+                <button data-tab="tab-expansions" class="tab-btn active flex-1 py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 bg-white text-pink-600 shadow-sm border border-pink-200">
+                    <i class="fa-solid fa-building"></i>
+                    <span class="hidden sm:inline">Floors</span>
+                </button>
+
+                <button data-tab="tab-decor" class="tab-btn flex-1 py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 text-slate-600 hover:bg-white/50">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span class="hidden sm:inline">Decor</span>
+                </button>
+
+                <button data-tab="tab-mannequins" class="tab-btn flex-1 py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 text-slate-600 hover:bg-white/50">
+                    <i class="fa-solid fa-shirt"></i>
+                    <span class="hidden sm:inline">Mannequins</span>
+                </button>
+
+                <button data-tab="tab-stylists" class="tab-btn flex-1 py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 text-slate-600 hover:bg-white/50">
+                    <i class="fa-solid fa-user-ninja"></i>
+                    <span class="hidden sm:inline">Staff</span>
+                </button>
+
+                <button data-tab="tab-stats" class="tab-btn flex-1 py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1 text-slate-600 hover:bg-white/50">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span class="hidden sm:inline">Stats</span>
+                </button>
+            </div>
+
+            <!-- Tab Content Scrollable Container -->
+            <div class="p-4 overflow-y-auto flex-1 space-y-4">
+
+                <!-- TAB 1: SHOP FLOOR EXPANSIONS -->
+                <div id="tab-expansions" class="tab-content space-y-3">
+                    <div class="flex justify-between items-center bg-pink-50 p-3 rounded-2xl border border-pink-200">
+                        <div>
+                            <h3 class="text-sm font-bold text-pink-900">Current Boutique Tier</h3>
+                            <p id="expansion-current-name" class="text-xs text-pink-600 font-semibold">Tier 1: Cozy Studio</p>
+                        </div>
+                        <span id="expansion-capacity-tag" class="bg-pink-500 text-white text-xs px-3 py-1 rounded-full font-bold">Cap: 5</span>
+                    </div>
+
+                    <div id="expansions-list" class="space-y-3">
+                        <!-- Dynamic Expansions Cards Rendered Here -->
+                    </div>
+                </div>
+
+                <!-- TAB 2: CUTE AESTHETIC DECOR -->
+                <div id="tab-decor" class="tab-content hidden space-y-3">
+                    <div class="bg-purple-50 p-3 rounded-2xl border border-purple-200 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-sm font-bold text-purple-900">Cute Aesthetics Boost</h3>
+                            <p class="text-xs text-purple-600">Decorations increase customer payout multipliers!</p>
+                        </div>
+                        <div class="text-right">
+                            <span id="decor-total-rating" class="text-sm font-extrabold text-purple-700">+0 ✨</span>
+                        </div>
+                    </div>
+
+                    <div id="decor-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Dynamic Decor Items Rendered Here -->
+                    </div>
+                </div>
+
+                <!-- TAB 3: HIGH-END MANNEQUINS -->
+                <div id="tab-mannequins" class="tab-content hidden space-y-3">
+                    <div class="bg-rose-50 p-3 rounded-2xl border border-rose-200">
+                        <h3 class="text-sm font-bold text-rose-900">High-Fashion Mannequins</h3>
+                        <p class="text-xs text-rose-600">Unlock luxury clothing displays to earn extra cash per styled customer!</p>
+                    </div>
+
+                    <div id="mannequin-list" class="space-y-3">
+                        <!-- Dynamic Mannequin Items Rendered Here -->
+                    </div>
+                </div>
+
+                <!-- TAB 4: ASSISTANT STYLIST STAFF -->
+                <div id="tab-stylists" class="tab-content hidden space-y-3">
+                    <div class="bg-teal-50 p-3 rounded-2xl border border-teal-200">
+                        <h3 class="text-sm font-bold text-teal-900">Assistant Stylist Staff</h3>
+                        <p class="text-xs text-teal-600">Hire AI helpers to greet, dress up, and check out customers automatically!</p>
+                    </div>
+
+                    <div id="stylist-list" class="space-y-3">
+                        <!-- Dynamic Stylist Items Rendered Here -->
+                    </div>
+                </div>
+
+                <!-- TAB 5: STATS & PROGRESS -->
+                <div id="tab-stats" class="tab-content hidden space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-pink-50 p-3 rounded-2xl border border-pink-200 text-center">
+                            <div class="text-[10px] uppercase font-bold text-pink-500">Total Customers Served</div>
+                            <div id="stat-total-served" class="text-xl font-black text-pink-700">0</div>
+                        </div>
+                        <div class="bg-purple-50 p-3 rounded-2xl border border-purple-200 text-center">
+                            <div class="text-[10px] uppercase font-bold text-purple-500">Total Earnings</div>
+                            <div id="stat-total-earnings" class="text-xl font-black text-purple-700">$0</div>
+                        </div>
+                        <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-200 text-center">
+                            <div class="text-[10px] uppercase font-bold text-emerald-500">Passive Income / Sec</div>
+                            <div id="stat-passive-income" class="text-xl font-black text-emerald-700">$0/s</div>
+                        </div>
+                        <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200 text-center">
+                            <div class="text-[10px] uppercase font-bold text-amber-500">Boutique Stars</div>
+                            <div id="stat-stars-count" class="text-xl font-black text-amber-600">⭐⭐⭐</div>
+                        </div>
+                    </div>
+
+                    <!-- Achievements Box -->
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                        <h4 class="text-xs font-bold text-slate-700 uppercase mb-2">Boutique Milestones</h4>
+                        <div id="milestones-container" class="space-y-2 text-xs">
+                            <!-- Render Milestones -->
+                        </div>
+                    </div>
+
+                    <!-- Reset Progress Button -->
+                    <div class="pt-2">
+                        <button id="btn-reset-game" class="w-full bg-slate-100 hover:bg-red-100 text-slate-500 hover:text-red-600 text-xs py-2 rounded-xl transition border border-slate-200 font-semibold">
+                            Reset Boutique Game Data
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer Credit -->
+    <footer class="py-2 text-center text-xs text-pink-400 font-medium">
+        ✨ Cute Boutique Tycoon — Expand, Decorate & Dress in Style! ✨
+    </footer>
+
+    <!-- Audio Effects Controller via Web Audio API -->
+    <script>
+        class SoundController {
+            constructor() {
+                this.enabled = true;
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+            }
+
+            playCoin() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(987.77, this.ctx.currentTime); // B5
+                osc.frequency.exponentialRampToValueAtTime(1318.51, this.ctx.currentTime + 0.15); // E6
+
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.15);
+            }
+
+            playBuy() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, this.ctx.currentTime); // C5
+                osc.frequency.exponentialRampToValueAtTime(783.99, this.ctx.currentTime + 0.2); // G5
+
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
+
+            playSparkle() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const notes = [1046.50, 1318.51, 1567.98, 2093.00]; // C6, E6, G6, C7
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.05);
+
+                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime + idx * 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.05 + 0.1);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + idx * 0.05);
+                    osc.stop(this.ctx.currentTime + idx * 0.05 + 0.1);
+                });
+            }
+
+            playPop() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.08);
+
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+        }
+
+        const sound = new SoundController();
+    </script>
+
+    <!-- Main Game Logic Engine -->
+    <script>
+        // --- GAME DATA CONFIGURATION ---
+        const EXPANSION_DATA = [
+            { id: 1, name: "Cozy Studio", cost: 0, capacity: 5, bgFloor: '#fbcfe8', wallColor: '#fce7f3', minTier: 1 },
+            { id: 2, name: "Pastel Boutique", cost: 350, capacity: 8, bgFloor: '#e9d5ff', wallColor: '#f3e8ff', minTier: 2 },
+            { id: 3, name: "Chic Fashion Loft", cost: 1200, capacity: 12, bgFloor: '#ccfbf1', wallColor: '#e6fffa', minTier: 3 },
+            { id: 4, name: "Royal Glam Pavilion", cost: 3500, capacity: 18, bgFloor: '#fef08a', wallColor: '#fef9c3', minTier: 4 },
+            { id: 5, name: "Empress Palace Shop", cost: 10000, capacity: 25, bgFloor: '#fed7aa', wallColor: '#ffedd5', minTier: 5 }
+        ];
+
+        const MANNEQUIN_DATA = [
+            { id: 'm1', name: 'Casual Daywear Display', baseIncome: 15, cost: 50, unlocked: true, icon: '👗', color: '#f472b6', style: 'Casual' },
+            { id: 'm2', name: 'Kawaii Pastel Dress', baseIncome: 35, cost: 200, unlocked: false, icon: '🎀', color: '#c084fc', style: 'Kawaii' },
+            { id: 'm3', name: 'Chic Urban Suit', baseIncome: 80, cost: 600, unlocked: false, icon: '🧥', color: '#2dd4bf', style: 'Chic' },
+            { id: 'm4', name: 'Elegant Evening Gown', baseIncome: 180, cost: 1800, unlocked: false, icon: '✨', color: '#fbbf24', style: 'Elegant' },
+            { id: 'm5', name: 'Royal Diamond Outfit', baseIncome: 450, cost: 5000, unlocked: false, icon: '👑', color: '#fb7185', style: 'Royal' }
+        ];
+
+        const DECOR_DATA = [
+            { id: 'd1', name: 'Neon Heart Sign', cuteRating: 15, cost: 80, bought: false, icon: '💖', category: 'Wall' },
+            { id: 'd2', name: 'Fluffy Pastel Rug', cuteRating: 30, cost: 180, bought: false, icon: '🏵️', category: 'Floor' },
+            { id: 'd3', name: 'Monstera Plant Corner', cuteRating: 45, cost: 320, bought: false, icon: '🪴', category: 'Plant' },
+            { id: 'd4', name: 'Cozy Plush Lounge Sofa', cuteRating: 90, cost: 750, bought: false, icon: '🛋️', category: 'Furniture' },
+            { id: 'd5', name: 'Crystal Chandelier', cuteRating: 180, cost: 1600, bought: false, icon: '💡', category: 'Lighting' },
+            { id: 'd6', name: 'Melody Vinyl Jukebox', cuteRating: 350, cost: 3200, bought: false, icon: '📻', category: 'Music' }
+        ];
+
+        const STYLIST_DATA = [
+            { id: 's1', name: 'Lily the Greeter', role: 'Welcomer', speed: 1.0, cost: 120, hired: false, level: 1, icon: '👩‍💼', color: '#3b82f6' },
+            { id: 's2', name: 'Mia the Fast Stylist', role: 'Dresser', speed: 1.5, cost: 400, hired: false, level: 1, icon: '✂️', color: '#ec4899' },
+            { id: 's3', name: 'Chloe Cashier Pro', role: 'Checkout', speed: 2.0, cost: 1000, hired: false, level: 1, icon: '💳', color: '#10b981' }
+        ];
+
+        const CUSTOMER_STYLES = ['Casual', 'Kawaii', 'Chic', 'Elegant', 'Royal'];
+
+        // --- GAME STATE ---
+        const gameState = {
+            cash: 100,
+            gems: 5,
+            cuteRating: 0,
+            currentExpansionIndex: 0,
+            totalCustomersServed: 0,
+            totalEarnings: 0,
+            tipsCollected: 0,
+            mannequins: JSON.parse(JSON.stringify(MANNEQUIN_DATA)),
+            decor: JSON.parse(JSON.stringify(DECOR_DATA)),
+            stylists: JSON.parse(JSON.stringify(STYLIST_DATA)),
+            uncollectedTips: 0
+        };
+
+        // --- CANVAS ANIMATION SYSTEM ---
+        let canvas, ctx;
+        let customers = [];
+        let particles = [];
+        let lastTime = performance.now();
+        let spawnTimer = 0;
+
+        // Position coordinates mapped inside the boutique canvas
+        const SHOP_LAYOUT = {
+            entrance: { x: 50, y: 320 },
+            waitingArea: { x: 120, y: 320 },
+            mannequinSpots: [
+                { x: 220, y: 150 },
+                { x: 340, y: 150 },
+                { x: 460, y: 150 },
+                { x: 580, y: 150 },
+                { x: 700, y: 150 }
+            ],
+            cashier: { x: 680, y: 320 },
+            exit: { x: 760, y: 380 }
+        };
+
+        // --- CUSTOMER CLASS ---
+        class Customer {
+            constructor(isVIP = false) {
+                this.id = Math.random().toString(36).substring(2, 9);
+                this.isVIP = isVIP;
+                this.x = SHOP_LAYOUT.entrance.x;
+                this.y = SHOP_LAYOUT.entrance.y;
+                this.radius = isVIP ? 18 : 14;
+                this.speed = isVIP ? 2.5 : 1.8;
+                
+                this.stylePreference = CUSTOMER_STYLES[Math.floor(Math.random() * CUSTOMER_STYLES.length)];
+                this.color = isVIP ? '#f59e0b' : this.getRandomColor();
+                
+                // Patience (0 to 100)
+                this.maxPatience = isVIP ? 140 : 100;
+                this.patience = this.maxPatience;
+                
+                // State Machine: 'ENTERING', 'CHOOSING_OUTFIT', 'STYLING', 'WAITING_CASHIER', 'CHECKING_OUT', 'LEAVING'
+                this.state = 'ENTERING';
+                this.targetSpot = null;
+                this.selectedMannequin = null;
+                this.serviceProgress = 0;
+                this.payValue = 0;
+            }
+
+            getRandomColor() {
+                const colors = ['#ec4899', '#8b5cf6', '#06b6d4', '#10b981', '#f43f5e', '#a855f7'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update(delta) {
+                // Patience drain
+                if (this.state !== 'LEAVING' && this.state !== 'CHECKING_OUT') {
+                    this.patience -= delta * 4;
+                    if (this.patience <= 0) {
+                        this.state = 'LEAVING';
+                        createFloatingText(this.x, this.y - 20, "Angry! 😡", "#ef4444");
+                    }
+                }
+
+                // AI State Machine Logic
+                switch (this.state) {
+                    case 'ENTERING':
+                        this.moveTowards(SHOP_LAYOUT.waitingArea, () => {
+                            this.assignMannequin();
+                        });
+                        break;
+
+                    case 'CHOOSING_OUTFIT':
+                        if (this.targetSpot) {
+                            this.moveTowards(this.targetSpot, () => {
+                                this.state = 'STYLING';
+                                this.serviceProgress = 0;
+                            });
+                        } else {
+                            this.assignMannequin();
+                        }
+                        break;
+
+                    case 'STYLING':
+                        // Check if Stylist (Mia) is hired or manual tap completes styling faster
+                        const mia = gameState.stylists.find(s => s.id === 's2' && s.hired);
+                        const speedMult = mia ? 1.5 * mia.level : 1;
+                        this.serviceProgress += delta * 25 * speedMult;
+
+                        if (this.serviceProgress >= 100) {
+                            // Outfit complete! Calculate Pay
+                            const man = gameState.mannequins.find(m => m.id === this.selectedMannequin.id);
+                            const cuteMult = 1 + (gameState.cuteRating / 100);
+                            const vipMult = this.isVIP ? 2.5 : 1.0;
+                            
+                            this.payValue = Math.round((man ? man.baseIncome : 15) * cuteMult * vipMult);
+                            this.state = 'WAITING_CASHIER';
+                        }
+                        break;
+
+                    case 'WAITING_CASHIER':
+                        this.moveTowards(SHOP_LAYOUT.cashier, () => {
+                            this.state = 'CHECKING_OUT';
+                            this.serviceProgress = 0;
+                        });
+                        break;
+
+                    case 'CHECKING_OUT':
+                        const chloe = gameState.stylists.find(s => s.id === 's3' && s.hired);
+                        const cashierSpeed = chloe ? 2.0 * chloe.level : 1;
+                        this.serviceProgress += delta * 40 * cashierSpeed;
+
+                        if (this.serviceProgress >= 100) {
+                            // Pay cash & leave tips!
+                            addCash(this.payValue);
+                            const tip = Math.round(this.payValue * (this.patience / this.maxPatience) * 0.3);
+                            if (tip > 0) {
+                                gameState.uncollectedTips += tip;
+                            }
+                            
+                            sound.playCoin();
+                            createFloatingText(this.x, this.y - 30, `+$${this.payValue}`, "#10b981");
+                            spawnSparkles(this.x, this.y, 8);
+
+                            gameState.totalCustomersServed++;
+                            gameState.totalEarnings += this.payValue;
+
+                            this.state = 'LEAVING';
+                        }
+                        break;
+
+                    case 'LEAVING':
+                        this.moveTowards(SHOP_LAYOUT.exit, () => {
+                            // Remove customer
+                            const idx = customers.indexOf(this);
+                            if (idx > -1) customers.splice(idx, 1);
+                        });
+                        break;
+                }
+            }
+
+            assignMannequin() {
+                const unlocked = gameState.mannequins.filter(m => m.unlocked);
+                if (unlocked.length > 0) {
+                    const chosen = unlocked[Math.floor(Math.random() * unlocked.length)];
+                    const spotIndex = gameState.mannequins.findIndex(m => m.id === chosen.id);
+                    if (spotIndex !== -1 && SHOP_LAYOUT.mannequinSpots[spotIndex]) {
+                        this.selectedMannequin = chosen;
+                        this.targetSpot = SHOP_LAYOUT.mannequinSpots[spotIndex];
+                        this.state = 'CHOOSING_OUTFIT';
+                    }
+                }
+            }
+
+            moveTowards(target, onArrival) {
+                const dx = target.x - this.x;
+                const dy = target.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 4) {
+                    this.x = target.x;
+                    this.y = target.y;
+                    if (onArrival) onArrival();
+                } else {
+                    this.x += (dx / dist) * this.speed;
+                    this.y += (dy / dist) * this.speed;
+                }
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                // VIP Aura
+                if (this.isVIP) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(251, 191, 36, 0.3)';
+                    ctx.fill();
+                }
+
+                // Customer Body Circle
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#ffffff';
+                ctx.stroke();
+
+                // Cute Face Eyes
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(-4, -2, 2.5, 0, Math.PI * 2);
+                ctx.arc(4, -2, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Patience Gauge Bar
+                if (this.state !== 'LEAVING') {
+                    const pct = Math.max(0, this.patience / this.maxPatience);
+                    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                    ctx.fillRect(-15, -this.radius - 12, 30, 5);
+
+                    ctx.fillStyle = pct > 0.5 ? '#10b981' : (pct > 0.25 ? '#f59e0b' : '#ef4444');
+                    ctx.fillRect(-15, -this.radius - 12, 30 * pct, 5);
+                }
+
+                // State Progress Bar (Styling or Cashier)
+                if (this.state === 'STYLING' || this.state === 'CHECKING_OUT') {
+                    const prog = Math.min(1, this.serviceProgress / 100);
+                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                    ctx.fillRect(-16, this.radius + 6, 32, 6);
+                    ctx.fillStyle = '#ec4899';
+                    ctx.fillRect(-16, this.radius + 6, 32 * prog, 6);
+                }
+
+                // Style Preference Icon Bubble
+                ctx.font = '10px Fredoka';
+                ctx.fillStyle = '#1e293b';
+                ctx.fillText(this.isVIP ? '👑' : '🛍️', -6, 4);
+
+                ctx.restore();
+            }
+        }
+
+        // --- PARTICLE SYSTEM ---
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4 - 2;
+                this.life = 1.0;
+                this.size = Math.random() * 4 + 2;
+                this.color = ['#f472b6', '#a855f7', '#fbbf24', '#34d399'][Math.floor(Math.random() * 4)];
+            }
+            update(delta) {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= delta * 2;
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function spawnSparkles(x, y, count = 10) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y));
+            }
+        }
+
+        // --- HELPER FUNCTIONS & UI UPGRADERS ---
+        function addCash(amount) {
+            gameState.cash += amount;
+            updateUI();
+        }
+
+        function createFloatingText(x, y, text, color = "#10b981") {
+            const container = document.getElementById('floating-container');
+            const el = document.createElement('div');
+            el.className = 'floating-text';
+            el.style.left = `${(x / 800) * 100}%`;
+            el.style.top = `${(y / 450) * 100}%`;
+            el.style.color = color;
+            el.innerText = text;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 1200);
+        }
+
+        function recalculateCuteRating() {
+            let total = 0;
+            gameState.decor.forEach(d => {
+                if (d.bought) total += d.cuteRating;
+            });
+            gameState.cuteRating = total;
+            document.getElementById('decor-total-rating').innerText = `+${total} ✨`;
+            document.getElementById('cute-multiplier').innerText = `${(1 + total / 100).toFixed(1)}x Bonus`;
+            updateUI();
+        }
+
+        function getCapacity() {
+            const exp = EXPANSION_DATA[gameState.currentExpansionIndex];
+            return exp ? exp.capacity : 5;
+        }
+
+        // --- RENDERING CANVAS FUNCTION ---
+        function renderShopCanvas() {
+            if (!ctx) return;
+            const currentExp = EXPANSION_DATA[gameState.currentExpansionIndex];
+
+            // 1. Draw Shop Floor Background
+            ctx.fillStyle = currentExp.bgFloor;
+            ctx.fillRect(0, 0, 800, 450);
+
+            // Wall Header Area
+            ctx.fillStyle = currentExp.wallColor;
+            ctx.fillRect(0, 0, 800, 100);
+            ctx.fillStyle = 'rgba(0,0,0,0.05)';
+            ctx.fillRect(0, 95, 800, 5);
+
+            // 2. Draw Boutique Wall Sign
+            ctx.fillStyle = '#ec4899';
+            ctx.font = 'bold 22px Fredoka';
+            ctx.textAlign = 'center';
+            ctx.fillText(`✨ ${currentExp.name.toUpperCase()} ✨`, 400, 45);
+
+            // 3. Draw Mannequin Stations & Displays
+            gameState.mannequins.forEach((m, idx) => {
+                const spot = SHOP_LAYOUT.mannequinSpots[idx];
+                if (!spot) return;
+
+                // Base Platform
+                ctx.fillStyle = m.unlocked ? '#e2e8f0' : '#cbd5e1';
+                ctx.beginPath();
+                ctx.ellipse(spot.x, spot.y + 25, 35, 12, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (m.unlocked) {
+                    // Mannequin Icon & Style Label
+                    ctx.fillStyle = m.color;
+                    ctx.font = '32px sans-serif';
+                    ctx.fillText(m.icon, spot.x, spot.y + 10);
+
+                    ctx.fillStyle = '#475569';
+                    ctx.font = '10px Fredoka';
+                    ctx.fillText(m.style, spot.x, spot.y + 42);
+                } else {
+                    // Locked Placeholder
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '18px sans-serif';
+                    ctx.fillText('🔒 Locked', spot.x, spot.y + 10);
+                }
+            });
+
+            // 4. Draw Decor Items in Background (If unlocked)
+            if (gameState.decor.find(d => d.id === 'd1' && d.bought)) {
+                // Neon Heart
+                ctx.font = '28px sans-serif';
+                ctx.fillText('💖', 80, 55);
+            }
+            if (gameState.decor.find(d => d.id === 'd5' && d.bought)) {
+                // Chandelier
+                ctx.font = '36px sans-serif';
+                ctx.fillText('💡', 400, 85);
+            }
+            if (gameState.decor.find(d => d.id === 'd3' && d.bought)) {
+                // Plant Corner
+                ctx.font = '32px sans-serif';
+                ctx.fillText('🪴', 40, 220);
+            }
+
+            // 5. Draw Cashier Counter Desk
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillRect(SHOP_LAYOUT.cashier.x - 30, SHOP_LAYOUT.cashier.y - 20, 60, 40);
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(SHOP_LAYOUT.cashier.x - 30, SHOP_LAYOUT.cashier.y - 20, 60, 40);
+            ctx.font = '22px sans-serif';
+            ctx.fillText('💳', SHOP_LAYOUT.cashier.x, SHOP_LAYOUT.cashier.y + 8);
+
+            // Draw Cashier Staff if hired
+            const chloe = gameState.stylists.find(s => s.id === 's3' && s.hired);
+            if (chloe) {
+                ctx.font = '20px sans-serif';
+                ctx.fillText('👩‍💼', SHOP_LAYOUT.cashier.x, SHOP_LAYOUT.cashier.y - 28);
+            }
+
+            // 6. Draw Uncollected Tips Notification
+            if (gameState.uncollectedTips > 0) {
+                ctx.fillStyle = '#10b981';
+                ctx.beginPath();
+                ctx.arc(SHOP_LAYOUT.cashier.x + 25, SHOP_LAYOUT.cashier.y - 25, 12, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 10px Fredoka';
+                ctx.fillText('$', SHOP_LAYOUT.cashier.x + 25, SHOP_LAYOUT.cashier.y - 21);
+            }
+
+            // 7. Render Customers
+            customers.forEach(c => c.draw(ctx));
+
+            // 8. Render Particles
+            particles.forEach(p => p.draw(ctx));
+        }
+
+        // --- MAIN GAME LOOP ---
+        function gameLoop(timestamp) {
+            const delta = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            // Spawning logic
+            spawnTimer += delta;
+            const maxCap = getCapacity();
+            const lilyGreeter = gameState.stylists.find(s => s.id === 's1' && s.hired);
+            const spawnInterval = lilyGreeter ? 2.5 : 4.0; // Greeter speeds up spawns
+
+            if (spawnTimer >= spawnInterval) {
+                spawnTimer = 0;
+                if (customers.length < maxCap) {
+                    customers.push(new Customer(Math.random() < 0.15)); // 15% VIP chance
+                }
+            }
+
+            // Passive Income logic from staff level
+            gameState.stylists.forEach(s => {
+                if (s.hired) {
+                    addCash(delta * 2 * s.level);
+                }
+            });
+
+            // Update Customers
+            customers.forEach(c => c.update(delta));
+
+            // Update Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update(delta);
+                if (particles[i].life <= 0) particles.splice(i, 1);
+            }
+
+            // Render Frame
+            renderShopCanvas();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- UI UPDATE & RENDERERS ---
+        function updateUI() {
+            document.getElementById('currency-cash').innerText = `$${Math.floor(gameState.cash)}`;
+            document.getElementById('currency-gems').innerText = gameState.gems;
+            document.getElementById('currency-cute').innerText = `${gameState.cuteRating} ✨`;
+
+            document.getElementById('stat-active-customers').innerText = customers.length;
+            document.getElementById('stat-max-customers').innerText = getCapacity();
+
+            // Stats tab
+            document.getElementById('stat-total-served').innerText = gameState.totalCustomersServed;
+            document.getElementById('stat-total-earnings').innerText = `$${Math.floor(gameState.totalEarnings)}`;
+            
+            let passiveIncome = 0;
+            gameState.stylists.forEach(s => { if (s.hired) passiveIncome += 2 * s.level; });
+            document.getElementById('stat-passive-income').innerText = `$${passiveIncome.toFixed(1)}/s`;
+
+            renderExpansionsTab();
+            renderDecorTab();
+            renderMannequinsTab();
+            renderStylistsTab();
+        }
+
+        function renderExpansionsTab() {
+            const currentExp = EXPANSION_DATA[gameState.currentExpansionIndex];
+            document.getElementById('expansion-current-name').innerText = `Tier ${currentExp.id}: ${currentExp.name}`;
+            document.getElementById('expansion-capacity-tag').innerText = `Cap: ${currentExp.capacity}`;
+
+            const container = document.getElementById('expansions-list');
+            container.innerHTML = '';
+
+            EXPANSION_DATA.forEach((exp, idx) => {
+                const isCurrent = idx === gameState.currentExpansionIndex;
+                const isUnlocked = idx <= gameState.currentExpansionIndex;
+
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border ${isCurrent ? 'bg-pink-100/70 border-pink-400' : 'bg-slate-50 border-slate-200'} flex justify-between items-center`;
+
+                card.innerHTML = `
+                    <div>
+                        <div class="text-xs font-bold text-slate-800">${exp.name}</div>
+                        <div class="text-[10px] text-slate-500">Max Capacity: ${exp.capacity} Customers</div>
+                    </div>
+                    <div>
+                        ${isCurrent ? `<span class="text-xs font-bold text-pink-600 bg-white px-2 py-1 rounded-lg border border-pink-200">Current</span>` :
+                          isUnlocked ? `<span class="text-xs font-bold text-slate-400">Unlocked</span>` :
+                          `<button onclick="buyExpansion(${idx})" class="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow transition">
+                              Unlock $${exp.cost}
+                          </button>`}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function buyExpansion(index) {
+            const target = EXPANSION_DATA[index];
+            if (!target) return;
+
+            if (gameState.cash >= target.cost) {
+                gameState.cash -= target.cost;
+                gameState.currentExpansionIndex = index;
+                sound.playSparkle();
+                spawnSparkles(400, 225, 25);
+                updateUI();
+            } else {
+                alert("Not enough Cash to expand your boutique!");
+            }
+        }
+
+        function renderDecorTab() {
+            const container = document.getElementById('decor-list');
+            container.innerHTML = '';
+
+            gameState.decor.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border ${item.bought ? 'bg-purple-50 border-purple-300' : 'bg-white border-slate-200'} flex flex-col justify-between space-y-2 shadow-sm`;
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl">${item.icon}</span>
+                        <div>
+                            <div class="text-xs font-bold text-slate-800">${item.name}</div>
+                            <div class="text-[10px] text-purple-600 font-semibold">+${item.cuteRating} Cute Rating</div>
+                        </div>
+                    </div>
+                    <div>
+                        ${item.bought ? 
+                            `<span class="block text-center text-xs font-bold text-purple-700 bg-purple-100 py-1 rounded-xl">Decorated ✨</span>` :
+                            `<button onclick="buyDecor('${item.id}')" class="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-1.5 rounded-xl transition shadow">
+                                Buy $${item.cost}
+                            </button>`
+                        }
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function buyDecor(id) {
+            const item = gameState.decor.find(d => d.id === id);
+            if (item && !item.bought) {
+                if (gameState.cash >= item.cost) {
+                    gameState.cash -= item.cost;
+                    item.bought = true;
+                    sound.playBuy();
+                    recalculateCuteRating();
+                } else {
+                    alert("Not enough Cash to buy this cute decor!");
+                }
+            }
+        }
+
+        function renderMannequinsTab() {
+            const container = document.getElementById('mannequin-list');
+            container.innerHTML = '';
+
+            gameState.mannequins.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border ${item.unlocked ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200'} flex justify-between items-center`;
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-xl shadow-sm border border-slate-100">
+                            ${item.icon}
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-slate-800">${item.name}</div>
+                            <div class="text-[10px] text-rose-600 font-semibold">Base Income: $${item.baseIncome} per customer</div>
+                        </div>
+                    </div>
+                    <div>
+                        ${item.unlocked ? 
+                            `<span class="text-xs font-bold text-rose-600 bg-white px-2.5 py-1 rounded-lg border border-rose-200">Active</span>` :
+                            `<button onclick="buyMannequin('${item.id}')" class="bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition shadow">
+                                Unlock $${item.cost}
+                            </button>`
+                        }
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function buyMannequin(id) {
+            const item = gameState.mannequins.find(m => m.id === id);
+            if (item && !item.unlocked) {
+                if (gameState.cash >= item.cost) {
+                    gameState.cash -= item.cost;
+                    item.unlocked = true;
+                    sound.playSparkle();
+                    updateUI();
+                } else {
+                    alert("Not enough Cash to unlock this mannequin display!");
+                }
+            }
+        }
+
+        function renderStylistsTab() {
+            const container = document.getElementById('stylist-list');
+            container.innerHTML = '';
+
+            gameState.stylists.forEach(s => {
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border ${s.hired ? 'bg-teal-50 border-teal-200' : 'bg-slate-50 border-slate-200'} flex justify-between items-center`;
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-xl shadow-sm border border-slate-100">
+                            ${s.icon}
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-slate-800">${s.name} ${s.hired ? `(Lv ${s.level})` : ''}</div>
+                            <div class="text-[10px] text-teal-600 font-semibold">${s.role} • Speed Boost</div>
+                        </div>
+                    </div>
+                    <div>
+                        ${s.hired ? 
+                            `<button onclick="upgradeStylist('${s.id}')" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition shadow">
+                                Upgrade $${s.cost * s.level}
+                            </button>` :
+                            `<button onclick="hireStylist('${s.id}')" class="bg-teal-500 hover:bg-teal-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition shadow">
+                                Hire $${s.cost}
+                            </button>`
+                        }
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function hireStylist(id) {
+            const s = gameState.stylists.find(st => st.id === id);
+            if (s && !s.hired) {
+                if (gameState.cash >= s.cost) {
+                    gameState.cash -= s.cost;
+                    s.hired = true;
+                    sound.playPop();
+                    updateUI();
+                } else {
+                    alert("Not enough Cash to hire this stylist!");
+                }
+            }
+        }
+
+        function upgradeStylist(id) {
+            const s = gameState.stylists.find(st => st.id === id);
+            if (s && s.hired) {
+                const upgradeCost = s.cost * s.level;
+                if (gameState.cash >= upgradeCost) {
+                    gameState.cash -= upgradeCost;
+                    s.level++;
+                    sound.playSparkle();
+                    updateUI();
+                } else {
+                    alert("Not enough Cash to level up stylist!");
+                }
+            }
+        }
+
+        // --- CANVAS INTERACTION & TAP HELPERS ---
+        function setupCanvasInteraction() {
+            canvas.addEventListener('pointerdown', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = 800 / rect.width;
+                const scaleY = 450 / rect.height;
+                const clickX = (e.clientX - rect.left) * scaleX;
+                const clickY = (e.clientY - rect.top) * scaleY;
+
+                // Check tap on cashier desk to collect tips
+                const distToCashier = Math.hypot(clickX - SHOP_LAYOUT.cashier.x, clickY - SHOP_LAYOUT.cashier.y);
+                if (distToCashier < 50 && gameState.uncollectedTips > 0) {
+                    addCash(gameState.uncollectedTips);
+                    sound.playCoin();
+                    createFloatingText(SHOP_LAYOUT.cashier.x, SHOP_LAYOUT.cashier.y - 20, `Tips +$${gameState.uncollectedTips}!`, "#fbbf24");
+                    gameState.uncollectedTips = 0;
+                    return;
+                }
+
+                // Check tap on customers to boost their styling progress manually!
+                customers.forEach(c => {
+                    const dist = Math.hypot(clickX - c.x, clickY - c.y);
+                    if (dist < 30) {
+                        c.serviceProgress = Math.min(100, c.serviceProgress + 35);
+                        sound.playPop();
+                        spawnSparkles(c.x, c.y, 5);
+                        createFloatingText(c.x, c.y - 20, "Styled! ✨", "#ec4899");
+                    }
+                });
+            });
+        }
+
+        // --- SETUP TAB NAVIGATION ---
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab-btn');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => {
+                        t.classList.remove('active', 'bg-white', 'text-pink-600', 'shadow-sm', 'border', 'border-pink-200');
+                        t.classList.add('text-slate-600');
+                    });
+                    tab.classList.add('active', 'bg-white', 'text-pink-600', 'shadow-sm', 'border', 'border-pink-200');
+                    tab.classList.remove('text-slate-600');
+
+                    const target = tab.getAttribute('data-tab');
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                    document.getElementById(target).classList.remove('hidden');
+                });
+            });
+        }
+
+        // --- BUTTON EVENTS ---
+        function setupActionButtons() {
+            document.getElementById('btn-call-vip').addEventListener('click', () => {
+                if (gameState.cash >= 100) {
+                    gameState.cash -= 100;
+                    customers.push(new Customer(true));
+                    sound.playSparkle();
+                    const alertEl = document.getElementById('vip-spawn-alert');
+                    alertEl.classList.remove('hidden');
+                    setTimeout(() => alertEl.classList.add('hidden'), 3000);
+                    updateUI();
+                } else {
+                    alert("You need $100 Cash to invite a VIP Fashionista!");
+                }
+            });
+
+            document.getElementById('btn-boost-speed').addEventListener('click', () => {
+                if (gameState.cash >= 150) {
+                    gameState.cash -= 150;
+                    for (let i = 0; i < 3; i++) {
+                        if (customers.length < getCapacity()) {
+                            customers.push(new Customer(false));
+                        }
+                    }
+                    sound.playBuy();
+                    updateUI();
+                } else {
+                    alert("Rush hour boost costs $150 Cash!");
+                }
+            });
+
+            document.getElementById('btn-collect-tips').addEventListener('click', () => {
+                if (gameState.uncollectedTips > 0) {
+                    addCash(gameState.uncollectedTips);
+                    sound.playCoin();
+                    createFloatingText(SHOP_LAYOUT.cashier.x, SHOP_LAYOUT.cashier.y - 20, `Tips +$${gameState.uncollectedTips}!`, "#fbbf24");
+                    gameState.uncollectedTips = 0;
+                    updateUI();
+                } else {
+                    createFloatingText(400, 225, "No tips to collect right now!", "#cbd5e1");
+                }
+            });
+
+            document.getElementById('btn-audio').addEventListener('click', () => {
+                sound.enabled = !sound.enabled;
+                const icon = document.getElementById('audio-icon');
+                if (sound.enabled) {
+                    icon.className = 'fa-solid fa-volume-high';
+                } else {
+                    icon.className = 'fa-solid fa-volume-xmark text-slate-400';
+                }
+            });
+
+            document.getElementById('btn-reset-game').addEventListener('click', () => {
+                if (confirm("Are you sure you want to reset your boutique shop data?")) {
+                    localStorage.removeItem('cute_boutique_save');
+                    location.reload();
+                }
+            });
+        }
+
+        // --- SAVE SYSTEM ---
+        function saveGame() {
+            try {
+                localStorage.setItem('cute_boutique_save', JSON.stringify(gameState));
+            } catch (e) {
+                console.error("Save failed", e);
+            }
+        }
+
+        function loadGame() {
+            try {
+                const saved = localStorage.getItem('cute_boutique_save');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    Object.assign(gameState, parsed);
+                    recalculateCuteRating();
+                }
+            } catch (e) {
+                console.error("Load failed", e);
+            }
+        }
+
+        // Auto Save Interval
+        setInterval(saveGame, 10000);
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            canvas = document.getElementById('shopCanvas');
+            canvas.width = 800;
+            canvas.height = 450;
+            ctx = canvas.getContext('2d');
+
+            loadGame();
+            setupTabs();
+            setupCanvasInteraction();
+            setupActionButtons();
+            updateUI();
+
+            // Spawn initial customers
+            customers.push(new Customer(false));
+            customers.push(new Customer(false));
+
+            // Start loop
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>
